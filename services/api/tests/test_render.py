@@ -61,6 +61,28 @@ def test_create_project_archives_uploaded_avatar(monkeypatch):
     assert objects.get(project.avatar.image_key) == b"IMG"
 
 
+def test_create_project_falls_back_to_default_avatar(monkeypatch):
+    """With neither a stock id nor an upload, AVATAR_DEFAULT_AVATAR is used."""
+
+    class DefaultAvatarProvider(FakeProvider):
+        def default_avatar_id(self):
+            return "default-presenter"
+
+    _install_fakes(monkeypatch, provider=DefaultAvatarProvider())
+    project = render_service.create_project(_request(stock_avatar_id=None))
+    assert project.avatar.source == "stock"
+    assert project.avatar.provider_avatar_id == "default-presenter"
+
+
+def test_create_project_requires_avatar_when_no_default(monkeypatch):
+    """No stock id, no upload, no configured default -> ValueError."""
+    import pytest
+
+    _install_fakes(monkeypatch)  # FakeProvider.default_avatar_id() is None
+    with pytest.raises(ValueError):
+        render_service.create_project(_request(stock_avatar_id=None))
+
+
 def test_run_render_downloads_and_archives_take(monkeypatch):
     objects, _ = _install_fakes(monkeypatch)
     project = render_service.create_project(_request())

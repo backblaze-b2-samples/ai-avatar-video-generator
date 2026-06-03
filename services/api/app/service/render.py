@@ -72,14 +72,21 @@ def create_project(
     voice_id = request.voice_id or provider.default_voice_id()
     project_id = str(uuid.uuid4())
 
+    # Mirror the voice fallback: when the caller picked neither a stock avatar
+    # nor a custom upload, fall back to the configured AVATAR_DEFAULT_AVATAR
+    # (a stock presenter id) via the provider before failing.
+    stock_avatar_id = request.stock_avatar_id or (
+        provider.default_avatar_id() if avatar_image_bytes is None else None
+    )
+
     if avatar_image_bytes is not None:
         image_key = projects_service.avatar_key(
             project_id, avatar_extension or "png"
         )
         avatar = AvatarRef(source="upload", image_key=image_key)
-    elif request.stock_avatar_id:
+    elif stock_avatar_id:
         avatar = AvatarRef(
-            source="stock", provider_avatar_id=request.stock_avatar_id
+            source="stock", provider_avatar_id=stock_avatar_id
         )
     else:
         raise ValueError(

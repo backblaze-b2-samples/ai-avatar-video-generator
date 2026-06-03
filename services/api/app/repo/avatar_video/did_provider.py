@@ -2,10 +2,20 @@
 
 D-ID's Clips/Talks API is a good free-tier default: a 14-day trial grants ~20
 credits (≈5 minutes of video) with no credit card (renders are watermarked on
-the trial tier). The flow this adapter drives:
+the trial tier). It supports BOTH a stock presenter as the talk source AND a
+custom photo/clip (D-ID's talking-photo signature capability). The flow this
+adapter drives:
 
-    POST /talks            -> { "id": "<job>", "status": "created" }
-    GET  /talks/{id}       -> { "status": "done", "result_url": "<mp4>" }  (poll)
+    POST /images          -> { "url": "<source_url>" }   (custom upload only)
+    POST /talks           -> { "id": "<job>", "status": "created" }
+    GET  /talks/{id}      -> { "status": "done", "result_url": "<mp4>" }  (poll)
+
+For a stock presenter the `source_url` is the presenter id. For a custom
+upload the avatar bytes are first POSTed to D-ID's `/images` endpoint to obtain
+a hosted `source_url`, which is then used in the `/talks` create call — so the
+studio's "upload a custom photo/clip" path renders end-to-end on the default
+provider. The whole exchange is server-side; the provider key never reaches the
+client.
 
 Auth is HTTP Basic with the API key as username (D-ID's documented scheme); we
 pass it through the `Authorization: Basic <base64(key:)>` header. The API key
@@ -90,6 +100,49 @@ class DIDProvider(AvatarVideoProvider):
     def default_voice_id(self) -> str:
         return settings.avatar_default_voice or _VOICES[0].id
 
+    def default_avatar_id(self) -> str | None:
+        # Optional configured fallback presenter; None if unset (the service
+        # then requires the caller to supply an avatar source).
+        return settings.avatar_default_avatar or None
+
+    def _upload_image(self, image_bytes: bytes) -> str:
+        """Upload a custom avatar photo/clip to D-ID and return its source_url.
+
+        D-ID's `/images` endpoint accepts a multipart file upload and returns a
+        hosted URL we can hand to `/talks` as the talk source. This is what
+        powers the studio's "upload a custom photo/clip" path. The request is
+        multipart (not JSON), so it does not reuse the JSON _client(); the auth
+        and User-Agent headers are applied directly.
+        """
+        try:
+            import httpx
+        except ImportError as e:  # pragma: no cover - install-time guard
+            raise AvatarVideoError(
+                "The `httpx` package is not installed. Run `pip install httpx`."
+            ) from e
+        headers = {
+            "Authorization": self._auth_header(),
+            "User-Agent": _USER_AGENT,
+        }
+        files = {"image": ("avatar", image_bytes, "application/octet-stream")}
+        try:
+            resp = httpx.post(
+                f"{_API_BASE}/images",
+                headers=headers,
+                files=files,
+                timeout=_TIMEOUT,
+            )
+        except Exception as e:  # network / timeout
+            raise AvatarVideoError(f"D-ID image upload request failed: {e}") from e
+        if resp.status_code >= 400:
+            raise AvatarVideoError(
+                f"D-ID image upload failed ({resp.status_code}): {resp.text[:300]}"
+            )
+        source_url = resp.json().get("url")
+        if not source_url:
+            raise AvatarVideoError("D-ID image upload returned no url.")
+        return source_url
+
     def create_render(
         self,
         script: str,
@@ -99,18 +152,19 @@ class DIDProvider(AvatarVideoProvider):
         avatar_image_bytes: bytes | None = None,
     ) -> str:
         # D-ID's create-talk takes a `source_url` (image/clip) plus a `script`
-        # with a TTS voice. For a custom upload we'd first POST the image to
-        # D-ID's /images endpoint; that exchange is the documented extension
-        # point — here we require a stock presenter id as the source_url so the
-        # default free-trial path works without extra uploads.
-        if not provider_avatar_id:
+        # with a TTS voice. The source_url is either a stock presenter id or,
+        # for a custom upload (D-ID's talking-photo capability), a URL obtained
+        # by first POSTing the avatar bytes to D-ID's /images endpoint.
+        if avatar_image_bytes is not None:
+            source_url = self._upload_image(avatar_image_bytes)
+        elif provider_avatar_id:
+            source_url = provider_avatar_id
+        else:
             raise AvatarVideoError(
-                "D-ID render requires a stock presenter id as the source. "
-                "Custom-image uploads are a documented extension point "
-                "(see docs/features/avatar-providers.md)."
+                "D-ID render requires a stock presenter id or a custom avatar image."
             )
         payload = {
-            "source_url": provider_avatar_id,
+            "source_url": source_url,
             "script": {
                 "type": "text",
                 "input": script,

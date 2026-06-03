@@ -28,6 +28,9 @@ class FakeProvider(AvatarVideoProvider):
     def default_voice_id(self):
         return "v1"
 
+    def default_avatar_id(self):
+        return None
+
     def create_render(
         self, script, voice_id, *, provider_avatar_id=None, avatar_image_bytes=None
     ):

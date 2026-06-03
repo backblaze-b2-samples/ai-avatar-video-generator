@@ -34,7 +34,13 @@ own API. Each adapter lazy-builds its HTTP client, so only the active provider n
 
 ### D-ID (default)
 Real free trial through the API: 14-day trial, ~20 credits (≈5 min of video), **no credit
-card**, watermarked on the trial tier. Drives `POST /talks` → poll `GET /talks/{id}` →
+card**, watermarked on the trial tier. Supports **both** avatar sources the studio offers:
+- **Stock presenter** — the presenter id is used directly as the `source_url`.
+- **Custom photo/clip upload** — D-ID's talking-photo capability. The uploaded avatar bytes
+  are POSTed to `POST /images` server-side to obtain a hosted `source_url`, which is then
+  used in the create-talk call.
+
+Drives `POST /images` (custom upload only) → `POST /talks` → poll `GET /talks/{id}` →
 `result_url`. Auth is HTTP Basic with the key. Config: `AVATAR_PROVIDER=did`, `DID_API_KEY`.
 
 ### FAL (alternate)
@@ -57,7 +63,8 @@ client. The browser only ever receives presigned B2 URLs for the finished MP4.
 ## Edge Cases
 - Unknown `AVATAR_PROVIDER` → `AvatarVideoError` (factory rejects it)
 - Missing key for the active provider → `AvatarVideoError` surfaced as 502 on `/avatars` / `/voices`
-- D-ID custom-image upload → documented extension point (the default path uses a stock presenter)
+- D-ID render with neither a stock presenter id nor a custom avatar image → `AvatarVideoError`
+  (the render service falls back to `AVATAR_DEFAULT_AVATAR` before reaching the provider)
 
 ## Verification
 - Test files: `services/api/tests/test_render.py` uses a fake in-memory provider implementing the interface

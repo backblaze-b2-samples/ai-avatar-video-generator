@@ -73,6 +73,10 @@ class FALProvider(AvatarVideoProvider):
     def default_voice_id(self) -> str:
         return settings.avatar_default_voice or _VOICES[0].id
 
+    def default_avatar_id(self) -> str | None:
+        # Optional configured fallback presenter; None if unset.
+        return settings.avatar_default_avatar or None
+
     def create_render(
         self,
         script: str,

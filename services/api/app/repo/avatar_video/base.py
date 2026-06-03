@@ -54,6 +54,12 @@ class AvatarVideoProvider(ABC):
         """Voice id to use when the caller didn't pick one."""
 
     @abstractmethod
+    def default_avatar_id(self) -> str | None:
+        """Stock presenter id to fall back to when the caller supplied neither
+        a stock avatar id nor a custom upload. None if no default is configured.
+        """
+
+    @abstractmethod
     def create_render(
         self,
         script: str,
