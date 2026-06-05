@@ -24,6 +24,20 @@ all live in the bucket, and a per-project `project.json` manifest is the record 
 - FastAPI backend with a strict layered architecture, structural tests, and `boto3`
   contained to a single module.
 
+## What it looks like
+
+**Dashboard** — project and render metrics (total projects, takes, minutes rendered, storage), a 7-day renders-per-day chart, and a recent-renders table with status and duration.
+
+![Dashboard with project metrics, renders-per-day chart, and recent renders table](docs/images/01-dashboard.png)
+
+**New Avatar Video** — script editor (type or upload a .txt file), stock avatar picker with provider thumbnails, voice selector, and a single Render video button.
+
+![New Avatar Video studio with script editor, avatar picker, and voice selector](docs/images/02-create.png)
+
+**Library** — project grid scoped to avatar-projects/, showing each project's title, take count, total duration, status badge, and creation date.
+
+![Library grid showing avatar-video projects with status badges and take counts](docs/images/03-library.png)
+
 ## How it works
 
 ```
