@@ -14,6 +14,11 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "**.backblazeb2.com",
       },
+      // D-ID presenter thumbnails (stock avatar previews in the studio picker)
+      {
+        protocol: "https",
+        hostname: "**.d-id.com",
+      },
     ],
   },
 };
