@@ -203,6 +203,28 @@ boundaries, file-size limits, and SDK containment are verified by structural tes
 | [docs/RELIABILITY.md](docs/RELIABILITY.md) | Reliability expectations |
 | [docs/exec-plans/](docs/exec-plans/) | Execution plans and tech debt tracker |
 
+## FAQ
+
+**Do I need a credit card to try it?**
+No. The default provider, D-ID, offers a 14-day free trial (~20 credits, ≈ 5 minutes of
+video) with no credit card required. Trial renders are watermarked.
+
+**Does it need a database?**
+No. Backblaze B2 is the sole datastore. Each project's `project.json` manifest, script,
+optional custom avatar, and rendered MP4 takes all live in the bucket.
+
+**Which avatar-video providers are supported?**
+D-ID by default, FAL as a pay-per-use alternate adapter, and HeyGen documented as an
+extension slot. Switch providers with the `AVATAR_PROVIDER` env var.
+
+**Is this an open-source alternative to HeyGen / Synthesia / D-ID?**
+It's a HeyGen / Synthesia / D-ID-style demo app showing Backblaze B2 as the storage layer
+for a media-heavy, iterative AI workload — not a hosted product.
+
+**Where are videos stored and how are they served?**
+In your B2 bucket under `avatar-projects/<id>/takes/`. The Library streams each take inline
+via short-lived presigned B2 URLs.
+
 ## Out of scope (v1)
 
 Multi-scene composition / ffmpeg concat; custom voice cloning; real-time streaming
