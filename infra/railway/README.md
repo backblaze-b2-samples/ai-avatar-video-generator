@@ -24,10 +24,11 @@ Set these on the API service:
 
 | Variable | Value |
 |----------|-------|
-| `B2_ENDPOINT` | Your B2 S3 endpoint |
-| `B2_KEY_ID` | Your B2 key ID |
+| `B2_REGION` | Your B2 region |
+| `B2_APPLICATION_KEY_ID` | Your B2 application key ID |
 | `B2_APPLICATION_KEY` | Your B2 key |
 | `B2_BUCKET_NAME` | Your bucket name |
+| `B2_PUBLIC_URL_BASE` | Optional public bucket URL base |
 | `API_CORS_ORIGINS` | Your web service URL (e.g., `https://web-production-xxx.up.railway.app`) |
 
 Set this on the Web service:

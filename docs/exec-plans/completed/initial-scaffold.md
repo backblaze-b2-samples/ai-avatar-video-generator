@@ -37,11 +37,12 @@ sibling `ai-audiobook-generator` (input → provider job → scoped library), ma
 - Starter exec-plan history cleared; tech-debt tracker reset
 
 ## Standards honored
-1. S3 API is the default — boto3 only in `repo/b2_client.py`; no b2-native SDK. The provider
+1. S3 API is the default — boto3 only in `repo/b2_client.py`; no native B2 SDK. The provider
    result-MP4 download is a plain HTTP GET (`httpx`) in the repo layer — not an S3 op.
-2. Custom user agent on the S3 client — `user_agent_extra="b2ai-avatar-video-generator"`.
-3. Standardized B2 env names — `B2_ENDPOINT`, `B2_REGION`, `B2_KEY_ID`, `B2_APPLICATION_KEY`,
-   `B2_BUCKET_NAME` (+ optional `B2_PUBLIC_URL`).
+2. Custom user agent on the S3 client —
+   `user_agent_extra="ai-avatar-video-generator (backblaze-b2-samples)"`.
+3. Standardized B2 env names — `B2_APPLICATION_KEY_ID`, `B2_APPLICATION_KEY`,
+   `B2_BUCKET_NAME`, `B2_REGION` (+ optional `B2_PUBLIC_URL_BASE`).
 
 ## B2 layout
 ```
@@ -69,9 +70,9 @@ _Archived from the Phase-1 scratch plan. The session-scoped scratch paths it ref
 
 # Scaffold Plan — `ai-avatar-video-generator`
 
-Forked from **vibe-coding-starter-kit** (cloned fresh at
-`.claude/scratch/vcsk-4c7379d4-96d9-4fb1-866e-76e4f8c0c798/`). This plan is the contract
-for the builder and reviewer subagents. The closest existing analog is the
+Forked from **vibe-coding-starter-kit** (cloned fresh into a session-scoped
+scratch directory). This plan is the contract for the builder and reviewer
+subagents. The closest existing analog is the
 sibling **ai-audiobook-generator** (input → provider job → scoped library);
 the avatar generator maps onto it almost 1:1.
 
@@ -219,7 +220,7 @@ uploads/                                            # generic Upload page (kept 
 - `ProjectDetail`, `ProjectSummary`, `CreateProjectRequest`, `ProjectStats`, `DailyRendersCount`.
 
 ## 3. B2 surface (S3 operations exercised)
-**S3-only — no b2-native APIs** (complies with the default standard). Operations:
+**S3-only — no native B2 APIs** (complies with the default standard). Operations:
 - `put_object` — manifest, `script.txt`, uploaded avatar, rendered take MP4 (`put_bytes`).
 - `get_object` — read manifest, read avatar bytes for upload-based render, read take bytes.
 - `list_objects_v2` — scoped Library listing (`avatar-projects/` prefix), full-bucket
@@ -230,7 +231,7 @@ uploads/                                            # generic Upload page (kept 
 - `delete_object` — delete a project's keys.
 - `head_bucket` — `/health` connectivity check.
 
-**b2-native usage:** none. **Non-S3 external HTTP:** downloading the provider's rendered
+**Native B2 usage:** none. **Non-S3 external HTTP:** downloading the provider's rendered
 MP4 from its result URL (`httpx`/`requests` GET) — not an S3 op, lives in the repo layer,
 does not touch boto3.
 
@@ -277,7 +278,7 @@ does not touch boto3.
 | `pnpm --filter` refs in root scripts | `@vibe-coding-starter-kit/web` | `@ai-avatar-video-generator/web` |
 | TS import paths (`queries.ts`, `api-client.ts`, `file-tree.ts`, components, `next.config.ts`) | `@vibe-coding-starter-kit/shared` | `@ai-avatar-video-generator/shared` |
 | `pnpm-lock.yaml` name field | `vibe-coding-starter-kit` | `ai-avatar-video-generator` (regen or edit) |
-| S3 **user agent** (`repo/b2_client.py`) | `user_agent_extra="b2ai-oss-start"` | `user_agent_extra="b2ai-avatar-video-generator"` |
+| S3 **user agent** (`repo/b2_client.py`) | `user_agent_extra="b2ai-oss-start"` | `user_agent_extra="ai-avatar-video-generator (backblaze-b2-samples)"` |
 | **UTM** content tag (README B2 links) | `utm_content=b2ai-oss-start` | `utm_content=b2ai-avatar-video-generator` |
 | Image tags / workflow slugs | *(none found in starter beyond pkg names)* | builder to verify `infra/railway/` + `.github/` if present and rename any |
 | Python modules | n/a (package stays `app`; new modules use snake_case: `avatar_video`, `projects_store`, `render`, `projects`) | — |
@@ -286,15 +287,16 @@ does not touch boto3.
 *(There is no literal top-level `CLAUDE.md`; these are the B2-sample standards enforced
 by the `b2-doctor` skill and the starter's AGENTS.md.)*
 1. **S3 API is the default** — boto3 S3 only, contained in `repo/b2_client.py`; no
-   b2-native SDK. (This app is 100% S3.)
-2. **Custom user agent on every S3 client** — `user_agent_extra="b2ai-avatar-video-generator"`.
-3. **Standardized `B2_*` env names** — keep the starter's set exactly (below).
+   native B2 SDK. (This app is 100% S3.)
+2. **Custom user agent on every S3 client** —
+   `user_agent_extra="ai-avatar-video-generator (backblaze-b2-samples)"`.
+3. **Standardized `B2_*` env names** — keep the required B2 set exactly (below).
 
 ## Env (`.env.example` + `config/settings.py`)
-Keep the starter's B2 set verbatim (source-of-truth standard — no drift):
+Keep the required B2 set verbatim (source-of-truth standard — no drift):
 ```
-B2_ENDPOINT=...           B2_KEY_ID=...        B2_APPLICATION_KEY=...
-B2_BUCKET_NAME=...         B2_PUBLIC_URL=        (optional public base)
+B2_APPLICATION_KEY_ID=...    B2_APPLICATION_KEY=...    B2_BUCKET_NAME=...
+B2_REGION=...                B2_PUBLIC_URL_BASE=        (optional public base)
 ```
 Add avatar-video config:
 ```

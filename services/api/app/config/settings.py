@@ -2,12 +2,17 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    b2_endpoint: str = ""
     b2_region: str = ""
-    b2_key_id: str = ""
+    b2_application_key_id: str = ""
     b2_application_key: str = ""
     b2_bucket_name: str = ""
-    b2_public_url: str = ""
+    b2_public_url_base: str = ""
+
+    @property
+    def b2_endpoint(self) -> str:
+        if not self.b2_region:
+            return ""
+        return f"https://s3.{self.b2_region}.backblazeb2.com"
 
     # Avatar-video providers. The active adapter is chosen by `avatar_provider`;
     # its SDK/HTTP client is built by the matching adapter in repo/avatar_video/.
