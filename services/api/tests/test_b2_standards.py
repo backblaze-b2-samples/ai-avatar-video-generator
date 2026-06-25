@@ -110,7 +110,7 @@ def test_s3_client_uses_standard_key_id_and_sample_user_agent(monkeypatch):
 
     b2_client.get_s3_client.cache_clear()
     monkeypatch.setattr(b2_client.boto3, "client", fake_client)
-    monkeypatch.setattr(b2_client.settings, "b2_region", "test-region")
+    monkeypatch.setattr(b2_client.settings, "b2_region", "us-west-004")
     monkeypatch.setattr(
         b2_client.settings, "b2_application_key_id", "application-key-id"
     )
@@ -123,6 +123,6 @@ def test_s3_client_uses_standard_key_id_and_sample_user_agent(monkeypatch):
         b2_client.get_s3_client.cache_clear()
 
     assert captured["service_name"] == "s3"
-    assert captured["endpoint_url"] == "https://s3.test-region.backblazeb2.com"
+    assert captured["endpoint_url"] == "https://s3.us-west-004.backblazeb2.com"
     assert captured["aws_access_key_id"] == "application-key-id"
     assert "(backblaze-b2-samples)" in captured["config"].user_agent_extra

@@ -24,7 +24,7 @@ Set these on the API service:
 
 | Variable | Value |
 |----------|-------|
-| `B2_REGION` | Your B2 region |
+| `B2_REGION` | Your B2 region segment, e.g. `us-west-004` |
 | `B2_APPLICATION_KEY_ID` | Your B2 application key ID |
 | `B2_APPLICATION_KEY` | Your B2 key |
 | `B2_BUCKET_NAME` | Your bucket name |
