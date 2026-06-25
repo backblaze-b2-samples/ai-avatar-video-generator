@@ -64,9 +64,10 @@ provider webhooks (we poll). All noted as extension points in the docs.
 
 ---
 
-## Appendix — Original approved plan (verbatim, pre-build)
+## Appendix — Normalized approved plan archive
 
-_Archived from the Phase-1 scratch plan. The session-scoped scratch paths it references have since been removed._
+_Archived from the Phase-1 scratch plan and normalized for current repository
+paths and B2 standards. This is not a verbatim historical snapshot._
 
 # Scaffold Plan — `ai-avatar-video-generator`
 

@@ -29,16 +29,18 @@ const REQUIRED_PYTHON_MINOR = 11; // 3.11+
 // and PLACEHOLDER_VALUES.
 const REQUIRED_B2_VARS = [
   "B2_REGION",
-  "B2_APPLICATION_KEY_ID",
   "B2_APPLICATION_KEY",
   "B2_BUCKET_NAME",
 ];
+const B2_KEY_ID_VARS = ["B2_APPLICATION_KEY_ID", "B2_KEY_ID"];
 const PLACEHOLDERS = new Set([
   "your_b2_region",
   "your_application_key_id",
+  "your_key_id",
   "your_application_key",
   "your-bucket-name",
 ]);
+const B2_REGION_PATTERN = /^[a-z]{2}(?:-[a-z]+)+-\d{3}$/;
 
 // Only Next.js: `pnpm dev` self-heals the API side via scripts/pick-port.mjs,
 // so warning about 8000 here would just duplicate dev.sh's own banner.
@@ -172,19 +174,38 @@ function checkEnv() {
   }
   const env = parseEnvFile(ENV_FILE);
   const missing = REQUIRED_B2_VARS.filter((k) => !env[k]);
+  if (!B2_KEY_ID_VARS.some((k) => env[k])) {
+    missing.push("B2_APPLICATION_KEY_ID (or legacy B2_KEY_ID)");
+  }
   if (missing.length > 0) {
     fail(
       `.env is missing required B2 variables: ${missing.join(", ")}`,
       "See .env.example for the full list and edit .env to add them",
     );
   }
-  const placeholders = REQUIRED_B2_VARS.filter(
+  const placeholders = [...REQUIRED_B2_VARS, ...B2_KEY_ID_VARS].filter(
     (k) => env[k] && PLACEHOLDERS.has(env[k]),
   );
   if (placeholders.length > 0) {
     fail(
       `.env still has placeholder values: ${placeholders.join(", ")}`,
       "Edit .env and replace placeholders with your real B2 credentials (https://secure.backblaze.com/app_keys.htm?utm_source=github&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=b2ai-avatar-video-generator)",
+    );
+  }
+  if (
+    env.B2_REGION &&
+    !PLACEHOLDERS.has(env.B2_REGION) &&
+    !B2_REGION_PATTERN.test(env.B2_REGION)
+  ) {
+    fail(
+      `.env has an invalid B2_REGION value: ${env.B2_REGION}`,
+      "Use only the region segment, e.g. `us-west-004`; do not include `https://s3.` or `.backblazeb2.com`",
+    );
+  }
+  if (env.B2_KEY_ID && !env.B2_APPLICATION_KEY_ID) {
+    warn(
+      "B2_KEY_ID is a legacy alias",
+      "Add B2_APPLICATION_KEY_ID with the same key ID before removing B2_KEY_ID in a later release",
     );
   }
 }

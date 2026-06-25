@@ -18,6 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from starlette.middleware.base import BaseHTTPMiddleware  # noqa: E402
 
 from app.config import settings  # noqa: E402
+from app.config.settings import is_valid_b2_region  # noqa: E402
 from app.runtime import files, health, metrics, projects, upload  # noqa: E402
 
 # --- Startup validation ---
@@ -28,7 +29,7 @@ from app.runtime import files, health, metrics, projects, upload  # noqa: E402
 # line, so misconfiguration is obvious within seconds rather than turning
 # into mysterious 500s on the first request.
 REQUIRED_B2_SETTINGS = (
-    ("b2_application_key_id", "B2_APPLICATION_KEY_ID"),
+    ("b2_application_key_id", "B2_APPLICATION_KEY_ID (or legacy B2_KEY_ID)"),
     ("b2_application_key", "B2_APPLICATION_KEY"),
     ("b2_bucket_name", "B2_BUCKET_NAME"),
     ("b2_region", "B2_REGION"),
@@ -45,8 +46,7 @@ PLACEHOLDER_VALUES = frozenset({
 })
 
 
-@asynccontextmanager
-async def lifespan(_app: "FastAPI"):
+def _validate_startup_configuration() -> None:
     missing = [
         env_name
         for attr, env_name in REQUIRED_B2_SETTINGS
@@ -70,6 +70,19 @@ async def lifespan(_app: "FastAPI"):
             + ", ".join(placeholders)
             + f". Edit {REPO_ROOT_ENV} with your real B2 credentials and restart."
         )
+
+    if not is_valid_b2_region(settings.b2_region):
+        raise RuntimeError(
+            "Invalid B2_REGION value: "
+            f"{settings.b2_region!r}. Use the region segment, e.g. "
+            "'us-west-004'; do not include 'https://s3.' or "
+            "'.backblazeb2.com'."
+        )
+
+
+@asynccontextmanager
+async def lifespan(_app: "FastAPI"):
+    _validate_startup_configuration()
     yield
 
 # --- Structured JSON logging ---
