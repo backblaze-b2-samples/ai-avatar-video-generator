@@ -24,11 +24,25 @@ Set these on the API service:
 
 | Variable | Value |
 |----------|-------|
-| `B2_ENDPOINT` | Your B2 S3 endpoint |
-| `B2_KEY_ID` | Your B2 key ID |
+| `B2_REGION` | Your B2 region segment, e.g. `us-west-004` |
+| `B2_APPLICATION_KEY_ID` | Your B2 application key ID |
 | `B2_APPLICATION_KEY` | Your B2 key |
 | `B2_BUCKET_NAME` | Your bucket name |
+| `B2_PUBLIC_URL_BASE` | Optional public bucket URL base |
 | `API_CORS_ORIGINS` | Your web service URL (e.g., `https://web-production-xxx.up.railway.app`) |
+
+### B2 environment migration
+
+Older deployments may still have the pre-standard B2 names below. For a rolling
+deploy, add the new variable while keeping the old one, deploy this version, then
+remove the old variable in a later release. When both key ID variables are set,
+`B2_APPLICATION_KEY_ID` wins.
+
+| Old variable | New variable | Notes |
+|--------------|--------------|-------|
+| `B2_KEY_ID` | `B2_APPLICATION_KEY_ID` | Same application key ID value |
+| `B2_ENDPOINT` | `B2_REGION` | Use only the region segment, e.g. `us-west-004`, not the full endpoint URL |
+| `B2_PUBLIC_URL` | `B2_PUBLIC_URL_BASE` | Optional; leave blank to use presigned URLs |
 
 Set this on the Web service:
 

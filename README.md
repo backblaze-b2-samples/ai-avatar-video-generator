@@ -95,10 +95,9 @@ Open `.env`, then head to the [Backblaze B2 dashboard](https://secure.backblaze.
 
 1. **Create a bucket.** Paste each value into `.env`:
    - **Bucket Unique Name** → `B2_BUCKET_NAME`
-   - **Endpoint** → `B2_ENDPOINT`
-   - the region segment of the endpoint (e.g. `us-west-004`) → `B2_REGION`
+   - the region segment of the bucket's S3 endpoint → `B2_REGION`
 2. **Create an application key** with `Read and Write` permission:
-   - **keyID** → `B2_KEY_ID`
+   - **keyID** → `B2_APPLICATION_KEY_ID`
    - **applicationKey** → `B2_APPLICATION_KEY` *(only shown once — paste it now)*
 
 > Walkthroughs: [creating a bucket](https://www.backblaze.com/docs/cloud-storage-create-and-manage-buckets?utm_source=github&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=b2ai-avatar-video-generator) and [creating app keys](https://www.backblaze.com/docs/cloud-storage-create-and-manage-app-keys?utm_source=github&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=b2ai-avatar-video-generator).

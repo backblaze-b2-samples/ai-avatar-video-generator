@@ -1,13 +1,42 @@
+import json
+import re
+from pathlib import Path
+
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings
+
+B2_ENV_CONTRACT_PATH = (
+    Path(__file__).resolve().parents[4] / "b2-env-contract.json"
+)
+B2_ENV_CONTRACT = json.loads(B2_ENV_CONTRACT_PATH.read_text())
+B2_PLACEHOLDER_VALUES = frozenset(B2_ENV_CONTRACT["placeholders"])
+B2_REGION_PATTERN = re.compile(B2_ENV_CONTRACT["regionPattern"])
+B2_APPLICATION_KEY_ID_ALIASES = tuple(
+    B2_ENV_CONTRACT["legacyAliases"]["B2_APPLICATION_KEY_ID"]
+)
+
+
+def is_valid_b2_region(value: str) -> bool:
+    return bool(B2_REGION_PATTERN.fullmatch(value))
 
 
 class Settings(BaseSettings):
-    b2_endpoint: str = ""
     b2_region: str = ""
-    b2_key_id: str = ""
+    b2_application_key_id: str = Field(
+        default="",
+        validation_alias=AliasChoices(
+            "B2_APPLICATION_KEY_ID", *B2_APPLICATION_KEY_ID_ALIASES
+        ),
+    )
     b2_application_key: str = ""
     b2_bucket_name: str = ""
-    b2_public_url: str = ""
+    b2_public_url_base: str = ""
+
+    @property
+    def b2_endpoint(self) -> str:
+        if not self.b2_region:
+            return ""
+        return f"https://s3.{self.b2_region}.backblazeb2.com"
 
     # Avatar-video providers. The active adapter is chosen by `avatar_provider`;
     # its SDK/HTTP client is built by the matching adapter in repo/avatar_video/.
@@ -40,7 +69,12 @@ class Settings(BaseSettings):
     # volume in production if you care about surviving restarts.
     download_count_file: str = "data/download_count.json"
 
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+    model_config = {
+        "env_file": ".env",
+        "env_file_encoding": "utf-8",
+        "populate_by_name": True,
+        "extra": "ignore",
+    }
 
     @property
     def cors_origins(self) -> list[str]:

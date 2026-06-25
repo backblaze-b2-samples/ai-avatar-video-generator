@@ -6,7 +6,8 @@ Security principles and implementation for the ai-avatar-video-generator.
 ## Trust Boundaries
 
 - **Frontend -> API**: CORS-restricted to configured origins, scoped to `GET/POST/DELETE/OPTIONS`
-- **API -> B2**: Authenticated via `B2_KEY_ID` + `B2_APPLICATION_KEY`, signature v4
+- **API -> B2**: Authenticated via `B2_APPLICATION_KEY_ID` + `B2_APPLICATION_KEY`,
+  signature v4
 - **API -> avatar provider**: Authenticated via a server-side key (`DID_API_KEY` / `FAL_KEY`); see below
 - **Client -> B2**: Presigned GET URLs (short expiry) — inline disposition for `<video>`
   streaming of takes, forced attachment for downloads

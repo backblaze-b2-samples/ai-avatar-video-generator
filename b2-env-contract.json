@@ -1,0 +1,25 @@
+{
+  "required": [
+    "B2_APPLICATION_KEY_ID",
+    "B2_APPLICATION_KEY",
+    "B2_BUCKET_NAME",
+    "B2_REGION"
+  ],
+  "legacyAliases": {
+    "B2_APPLICATION_KEY_ID": [
+      "B2_KEY_ID"
+    ]
+  },
+  "legacyIgnored": [
+    "B2_ENDPOINT",
+    "B2_PUBLIC_URL"
+  ],
+  "placeholders": [
+    "your_b2_region",
+    "your_application_key_id",
+    "your_key_id",
+    "your_application_key",
+    "your-bucket-name"
+  ],
+  "regionPattern": "^[a-z]{2}(?:-[a-z]+)+-\\d{3}$"
+}
