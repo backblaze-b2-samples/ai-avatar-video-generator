@@ -18,29 +18,24 @@ import { fileURLToPath } from "node:url";
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENV_FILE = resolve(REPO_ROOT, ".env");
 const VENV_UVICORN = resolve(REPO_ROOT, "services/api/.venv/bin/uvicorn");
+const B2_ENV_CONTRACT = JSON.parse(
+  readFileSync(resolve(REPO_ROOT, "b2-env-contract.json"), "utf8"),
+);
 
 // Required minimum versions. Bump as upstream support shifts.
 const REQUIRED_NODE_MAJOR = 20;
 const REQUIRED_PNPM_MAJOR = 9;
 const REQUIRED_PYTHON_MINOR = 11; // 3.11+
 
-// Required B2 env vars + the exact placeholder strings shipped in
-// .env.example. Keep in sync with services/api/main.py REQUIRED_B2_SETTINGS
-// and PLACEHOLDER_VALUES.
-const REQUIRED_B2_VARS = [
-  "B2_REGION",
-  "B2_APPLICATION_KEY",
-  "B2_BUCKET_NAME",
+const REQUIRED_B2_VARS = B2_ENV_CONTRACT.required.filter(
+  (key) => key !== "B2_APPLICATION_KEY_ID",
+);
+const B2_KEY_ID_VARS = [
+  "B2_APPLICATION_KEY_ID",
+  ...(B2_ENV_CONTRACT.legacyAliases.B2_APPLICATION_KEY_ID ?? []),
 ];
-const B2_KEY_ID_VARS = ["B2_APPLICATION_KEY_ID", "B2_KEY_ID"];
-const PLACEHOLDERS = new Set([
-  "your_b2_region",
-  "your_application_key_id",
-  "your_key_id",
-  "your_application_key",
-  "your-bucket-name",
-]);
-const B2_REGION_PATTERN = /^[a-z]{2}(?:-[a-z]+)+-\d{3}$/;
+const PLACEHOLDERS = new Set(B2_ENV_CONTRACT.placeholders);
+const B2_REGION_PATTERN = new RegExp(B2_ENV_CONTRACT.regionPattern);
 
 // Only Next.js: `pnpm dev` self-heals the API side via scripts/pick-port.mjs,
 // so warning about 8000 here would just duplicate dev.sh's own banner.
@@ -198,7 +193,7 @@ function checkEnv() {
     !B2_REGION_PATTERN.test(env.B2_REGION)
   ) {
     fail(
-      `.env has an invalid B2_REGION value: ${env.B2_REGION}`,
+      ".env has an invalid B2_REGION value",
       "Use only the region segment, e.g. `us-west-004`; do not include `https://s3.` or `.backblazeb2.com`",
     );
   }

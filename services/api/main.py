@@ -17,8 +17,12 @@ from fastapi import FastAPI  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from starlette.middleware.base import BaseHTTPMiddleware  # noqa: E402
 
-from app.config import settings  # noqa: E402
-from app.config.settings import is_valid_b2_region  # noqa: E402
+from app.config import Settings, settings  # noqa: E402
+from app.config.settings import (  # noqa: E402
+    B2_ENV_CONTRACT,
+    B2_PLACEHOLDER_VALUES,
+    is_valid_b2_region,
+)
 from app.runtime import files, health, metrics, projects, upload  # noqa: E402
 
 # --- Startup validation ---
@@ -28,30 +32,39 @@ from app.runtime import files, health, metrics, projects, upload  # noqa: E402
 # with a human-readable message — uvicorn surfaces this as the first log
 # line, so misconfiguration is obvious within seconds rather than turning
 # into mysterious 500s on the first request.
-REQUIRED_B2_SETTINGS = (
-    ("b2_application_key_id", "B2_APPLICATION_KEY_ID (or legacy B2_KEY_ID)"),
-    ("b2_application_key", "B2_APPLICATION_KEY"),
-    ("b2_bucket_name", "B2_BUCKET_NAME"),
-    ("b2_region", "B2_REGION"),
+REQUIRED_B2_ENV_NAMES = tuple(B2_ENV_CONTRACT["required"])
+B2_SETTING_ATTRS = {
+    "B2_APPLICATION_KEY_ID": "b2_application_key_id",
+    "B2_APPLICATION_KEY": "b2_application_key",
+    "B2_BUCKET_NAME": "b2_bucket_name",
+    "B2_REGION": "b2_region",
+}
+B2_LEGACY_ALIASES = B2_ENV_CONTRACT["legacyAliases"]
+
+
+def _display_env_name(env_name: str) -> str:
+    aliases = B2_LEGACY_ALIASES.get(env_name, [])
+    if aliases:
+        return f"{env_name} (or legacy {', '.join(aliases)})"
+    return env_name
+
+
+REQUIRED_B2_SETTINGS = tuple(
+    (B2_SETTING_ATTRS[env_name], _display_env_name(env_name))
+    for env_name in REQUIRED_B2_ENV_NAMES
 )
 
-# Exact placeholder strings shipped in .env.example. If a user copied
-# the example and didn't edit it, Settings will pass the "non-empty"
-# check above but every B2 call will still 403. Catch that here.
-PLACEHOLDER_VALUES = frozenset({
-    "your_b2_region",
-    "your_application_key_id",
-    "your_key_id",
-    "your_application_key",
-    "your-bucket-name",
-})
+# Exact placeholder strings shipped in .env.example and legacy env examples.
+# If a user copied an example and didn't edit it, Settings will pass the
+# "non-empty" check above but every B2 call will still 403. Catch that here.
+PLACEHOLDER_VALUES = B2_PLACEHOLDER_VALUES
 
 
-def _validate_startup_configuration() -> None:
+def _validate_startup_configuration(config: Settings) -> None:
     missing = [
         env_name
         for attr, env_name in REQUIRED_B2_SETTINGS
-        if not getattr(settings, attr)
+        if not getattr(config, attr)
     ]
     if missing:
         raise RuntimeError(
@@ -63,7 +76,7 @@ def _validate_startup_configuration() -> None:
     placeholders = [
         env_name
         for attr, env_name in REQUIRED_B2_SETTINGS
-        if getattr(settings, attr) in PLACEHOLDER_VALUES
+        if getattr(config, attr) in PLACEHOLDER_VALUES
     ]
     if placeholders:
         raise RuntimeError(
@@ -72,10 +85,9 @@ def _validate_startup_configuration() -> None:
             + f". Edit {REPO_ROOT_ENV} with your real B2 credentials and restart."
         )
 
-    if not is_valid_b2_region(settings.b2_region):
+    if not is_valid_b2_region(config.b2_region):
         raise RuntimeError(
-            "Invalid B2_REGION value: "
-            f"{settings.b2_region!r}. Use the region segment, e.g. "
+            "Invalid B2_REGION value. Use the region segment, e.g. "
             "'us-west-004'; do not include 'https://s3.' or "
             "'.backblazeb2.com'."
         )
@@ -83,7 +95,7 @@ def _validate_startup_configuration() -> None:
 
 @asynccontextmanager
 async def lifespan(_app: "FastAPI"):
-    _validate_startup_configuration()
+    _validate_startup_configuration(settings)
     yield
 
 # --- Structured JSON logging ---
