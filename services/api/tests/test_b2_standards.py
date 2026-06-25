@@ -57,6 +57,23 @@ def test_startup_validation_accepts_legacy_b2_key_id(monkeypatch):
     api_main._validate_startup_configuration()
 
 
+def test_startup_validation_rejects_legacy_b2_key_id_placeholder(
+    monkeypatch,
+):
+    monkeypatch.delenv("B2_APPLICATION_KEY_ID", raising=False)
+    monkeypatch.setenv("B2_KEY_ID", "your_key_id")
+    settings = Settings(
+        _env_file=None,
+        b2_application_key="application-key",
+        b2_bucket_name="bucket",
+        b2_region="us-west-004",
+    )
+    monkeypatch.setattr(api_main, "settings", settings)
+
+    with pytest.raises(RuntimeError, match="placeholder values"):
+        api_main._validate_startup_configuration()
+
+
 @pytest.mark.parametrize(
     "region",
     [
