@@ -44,6 +44,9 @@ Security principles and implementation for the ai-avatar-video-generator.
 ## Secrets Management
 
 - All secrets loaded via environment variables (pydantic-settings)
+- B2 configuration uses the standardized names in `.env.example`:
+  `B2_APPLICATION_KEY_ID`, `B2_APPLICATION_KEY`, `B2_BUCKET_NAME`, `B2_REGION`, and
+  optional `B2_PUBLIC_URL_BASE`
 - Never committed to source control
 - `.env.example` documents required variables without values (B2 + provider keys)
 
