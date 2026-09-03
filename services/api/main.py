@@ -39,22 +39,14 @@ B2_SETTING_ATTRS = {
     "B2_BUCKET_NAME": "b2_bucket_name",
     "B2_REGION": "b2_region",
 }
-B2_LEGACY_ALIASES = B2_ENV_CONTRACT["legacyAliases"]
-
-
-def _display_env_name(env_name: str) -> str:
-    aliases = B2_LEGACY_ALIASES.get(env_name, [])
-    if aliases:
-        return f"{env_name} (or legacy {', '.join(aliases)})"
-    return env_name
 
 
 REQUIRED_B2_SETTINGS = tuple(
-    (B2_SETTING_ATTRS[env_name], _display_env_name(env_name))
+    (B2_SETTING_ATTRS[env_name], env_name)
     for env_name in REQUIRED_B2_ENV_NAMES
 )
 
-# Exact placeholder strings shipped in .env.example and legacy env examples.
+# Exact placeholder strings shipped in .env.example.
 # If a user copied an example and didn't edit it, Settings will pass the
 # "non-empty" check above but every B2 call will still 403. Catch that here.
 PLACEHOLDER_VALUES = B2_PLACEHOLDER_VALUES

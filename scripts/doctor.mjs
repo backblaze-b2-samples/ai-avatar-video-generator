@@ -27,13 +27,9 @@ const REQUIRED_NODE_MAJOR = 20;
 const REQUIRED_PNPM_MAJOR = 9;
 const REQUIRED_PYTHON_MINOR = 11; // 3.11+
 
-const REQUIRED_B2_VARS = B2_ENV_CONTRACT.required.filter(
-  (key) => key !== "B2_APPLICATION_KEY_ID",
-);
-const B2_KEY_ID_VARS = [
-  "B2_APPLICATION_KEY_ID",
-  ...(B2_ENV_CONTRACT.legacyAliases.B2_APPLICATION_KEY_ID ?? []),
-];
+const REQUIRED_B2_VARS = B2_ENV_CONTRACT.required;
+const OPTIONAL_B2_VARS = B2_ENV_CONTRACT.optional ?? [];
+const STANDARD_B2_VARS = [...REQUIRED_B2_VARS, ...OPTIONAL_B2_VARS];
 const PLACEHOLDERS = new Set(B2_ENV_CONTRACT.placeholders);
 const B2_REGION_PATTERN = new RegExp(B2_ENV_CONTRACT.regionPattern);
 
@@ -169,16 +165,13 @@ function checkEnv() {
   }
   const env = parseEnvFile(ENV_FILE);
   const missing = REQUIRED_B2_VARS.filter((k) => !env[k]);
-  if (!B2_KEY_ID_VARS.some((k) => env[k])) {
-    missing.push("B2_APPLICATION_KEY_ID (or legacy B2_KEY_ID)");
-  }
   if (missing.length > 0) {
     fail(
       `.env is missing required B2 variables: ${missing.join(", ")}`,
       "See .env.example for the full list and edit .env to add them",
     );
   }
-  const placeholders = [...REQUIRED_B2_VARS, ...B2_KEY_ID_VARS].filter(
+  const placeholders = STANDARD_B2_VARS.filter(
     (k) => env[k] && PLACEHOLDERS.has(env[k]),
   );
   if (placeholders.length > 0) {
@@ -195,12 +188,6 @@ function checkEnv() {
     fail(
       ".env has an invalid B2_REGION value",
       "Use only the region segment, e.g. `us-west-004`; do not include `https://s3.` or `.backblazeb2.com`",
-    );
-  }
-  if (env.B2_KEY_ID && !env.B2_APPLICATION_KEY_ID) {
-    warn(
-      "B2_KEY_ID is a legacy alias",
-      "Add B2_APPLICATION_KEY_ID with the same key ID before removing B2_KEY_ID in a later release",
     );
   }
 }

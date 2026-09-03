@@ -2,7 +2,6 @@ import json
 import re
 from pathlib import Path
 
-from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings
 
 B2_ENV_CONTRACT_PATH = (
@@ -11,9 +10,6 @@ B2_ENV_CONTRACT_PATH = (
 B2_ENV_CONTRACT = json.loads(B2_ENV_CONTRACT_PATH.read_text())
 B2_PLACEHOLDER_VALUES = frozenset(B2_ENV_CONTRACT["placeholders"])
 B2_REGION_PATTERN = re.compile(B2_ENV_CONTRACT["regionPattern"])
-B2_APPLICATION_KEY_ID_ALIASES = tuple(
-    B2_ENV_CONTRACT["legacyAliases"]["B2_APPLICATION_KEY_ID"]
-)
 
 
 def is_valid_b2_region(value: str) -> bool:
@@ -22,12 +18,7 @@ def is_valid_b2_region(value: str) -> bool:
 
 class Settings(BaseSettings):
     b2_region: str = ""
-    b2_application_key_id: str = Field(
-        default="",
-        validation_alias=AliasChoices(
-            "B2_APPLICATION_KEY_ID", *B2_APPLICATION_KEY_ID_ALIASES
-        ),
-    )
+    b2_application_key_id: str = ""
     b2_application_key: str = ""
     b2_bucket_name: str = ""
     b2_public_url_base: str = ""

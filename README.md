@@ -100,6 +100,9 @@ Open `.env`, then head to the [Backblaze B2 dashboard](https://secure.backblaze.
    - **keyID** → `B2_APPLICATION_KEY_ID`
    - **applicationKey** → `B2_APPLICATION_KEY` *(only shown once — paste it now)*
 
+Optional: set `B2_PUBLIC_URL_BASE` only if the bucket is served publicly. When it is
+blank, the API uses short-lived presigned URLs for file reads and video streaming.
+
 > Walkthroughs: [creating a bucket](https://www.backblaze.com/docs/cloud-storage-create-and-manage-buckets?utm_source=github&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=b2ai-avatar-video-generator) and [creating app keys](https://www.backblaze.com/docs/cloud-storage-create-and-manage-app-keys?utm_source=github&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=b2ai-avatar-video-generator).
 
 **4. Add a provider key**

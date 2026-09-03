@@ -19,35 +19,18 @@ def test_settings_derives_s3_endpoint_from_b2_region():
     assert settings.b2_endpoint == "https://s3.us-west-004.backblazeb2.com"
 
 
-def test_settings_accepts_legacy_b2_key_id_alias(monkeypatch):
-    monkeypatch.delenv("B2_APPLICATION_KEY_ID", raising=False)
-    monkeypatch.setenv("B2_KEY_ID", "legacy-key-id")
-
-    settings = Settings(_env_file=None)
-
-    assert settings.b2_application_key_id == "legacy-key-id"
-
-
-def test_settings_prefers_standard_b2_application_key_id(monkeypatch):
+def test_settings_reads_standard_b2_application_key_id(monkeypatch):
     monkeypatch.setenv("B2_APPLICATION_KEY_ID", "standard-key-id")
-    monkeypatch.setenv("B2_KEY_ID", "legacy-key-id")
 
     settings = Settings(_env_file=None)
 
     assert settings.b2_application_key_id == "standard-key-id"
 
 
-def test_settings_ignores_legacy_dotenv_keys(monkeypatch, tmp_path):
-    for key in (
-        "B2_REGION",
-        "B2_APPLICATION_KEY_ID",
-        "B2_APPLICATION_KEY",
-        "B2_BUCKET_NAME",
-        "B2_ENDPOINT",
-        "B2_KEY_ID",
-        "B2_PUBLIC_URL",
-    ):
+def test_settings_reads_standard_dotenv_keys(monkeypatch, tmp_path):
+    for key in (*B2_ENV_CONTRACT["required"], *B2_ENV_CONTRACT["optional"]):
         monkeypatch.delenv(key, raising=False)
+
     env_file = tmp_path / ".env"
     env_file.write_text(
         "\n".join(
@@ -56,9 +39,7 @@ def test_settings_ignores_legacy_dotenv_keys(monkeypatch, tmp_path):
                 "B2_APPLICATION_KEY_ID=standard-key-id",
                 "B2_APPLICATION_KEY=application-key",
                 "B2_BUCKET_NAME=bucket",
-                "B2_ENDPOINT=https://s3.us-west-004.backblazeb2.com",
-                "B2_KEY_ID=legacy-key-id",
-                "B2_PUBLIC_URL=https://example.com",
+                "B2_PUBLIC_URL_BASE=https://example.com",
             ]
         )
     )
@@ -66,6 +47,7 @@ def test_settings_ignores_legacy_dotenv_keys(monkeypatch, tmp_path):
     settings = Settings(_env_file=env_file)
 
     assert settings.b2_application_key_id == "standard-key-id"
+    assert settings.b2_public_url_base == "https://example.com"
     api_main._validate_startup_configuration(settings)
 
 
@@ -74,6 +56,7 @@ def test_b2_env_contract_is_shared_with_doctor_and_startup():
 
     assert "b2-env-contract.json" in doctor_script
     assert tuple(B2_ENV_CONTRACT["required"]) == api_main.REQUIRED_B2_ENV_NAMES
+    assert tuple(B2_ENV_CONTRACT["optional"]) == ("B2_PUBLIC_URL_BASE",)
     assert api_main.PLACEHOLDER_VALUES == B2_PLACEHOLDER_VALUES
 
 
@@ -90,9 +73,7 @@ def test_startup_validation_accepts_valid_b2_region(region):
     api_main._validate_startup_configuration(settings)
 
 
-def test_startup_validation_accepts_legacy_b2_key_id(monkeypatch):
-    monkeypatch.delenv("B2_APPLICATION_KEY_ID", raising=False)
-    monkeypatch.setenv("B2_KEY_ID", "legacy-key-id")
+def test_startup_validation_requires_standard_b2_application_key_id():
     settings = Settings(
         _env_file=None,
         b2_application_key="application-key",
@@ -100,22 +81,7 @@ def test_startup_validation_accepts_legacy_b2_key_id(monkeypatch):
         b2_region="us-west-004",
     )
 
-    api_main._validate_startup_configuration(settings)
-
-
-def test_startup_validation_rejects_legacy_b2_key_id_placeholder(
-    monkeypatch,
-):
-    monkeypatch.delenv("B2_APPLICATION_KEY_ID", raising=False)
-    monkeypatch.setenv("B2_KEY_ID", "your_key_id")
-    settings = Settings(
-        _env_file=None,
-        b2_application_key="application-key",
-        b2_bucket_name="bucket",
-        b2_region="us-west-004",
-    )
-
-    with pytest.raises(RuntimeError, match="placeholder values"):
+    with pytest.raises(RuntimeError, match="B2_APPLICATION_KEY_ID"):
         api_main._validate_startup_configuration(settings)
 
 
